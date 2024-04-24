@@ -65,7 +65,7 @@ String cardUser = "3397572630";
 #define THRESHOLD4 200
 #define THRESHOLD5 200
 #define THRESHOLD6 200
-#define isiAir 400
+#define isiAir 200
 
 int distance1 = 0;
 int distance2 = 0;
@@ -75,14 +75,12 @@ int distance5 = 0;
 int distance6 = 0;
 int waktuPengisian = 0;
 
-
-
 String mode = "";
 
 void setup() {
   // Initialize Serial Monitor
   Serial.begin(115200);
-  waktuPengisian = isiAir * 50;
+  waktuPengisian = isiAir * 35;
   // Set trigger pins as output
   while (!Serial) delay(10);  // for Leonardo/Micro/Zero
 
@@ -140,6 +138,8 @@ void loop() {
   digitalWrite(LED1, HIGH);
   digitalWrite(LED2, LOW);
   digitalWrite(LED3, LOW);
+  digitalWrite(RELAY_PIN_1, LOW);
+  digitalWrite(RELAY_PIN_1, LOW);
   getNfcIdUser();
   Serial.println(nfcID);
   delay(100);
@@ -171,8 +171,14 @@ void algoritmaPN532() {
   digitalWrite(RELAY_PIN_1, HIGH);
   delay(waktuPengisian);
   digitalWrite(RELAY_PIN_1, LOW);
+  digitalWrite(RELAY_PIN_1, LOW);
+  delay(100);
+  digitalWrite(RELAY_PIN_1, LOW);
+  digitalWrite(RELAY_PIN_1, LOW);
   Serial.println("SELESAI");
-  delay(20);
+  delay(100);
+  digitalWrite(RELAY_PIN_1, LOW);
+  digitalWrite(RELAY_PIN_1, LOW);
 }
 void algoritmaDispenserOne() {
   if (Serial.available() > 0) {  //open communication
