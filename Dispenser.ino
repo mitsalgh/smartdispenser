@@ -45,8 +45,8 @@ String cardUser = "3397572630";
 
 // Pins for Relay
 #define RELAY_PIN_1 A0  //Relay pin untuk panas
-#define RELAY_PIN_2 A1  //Relay pin untuk normal
-#define RELAY_PIN_3 A2  //Relay pin untuk dingin
+#define RELAY_PIN_2 A2  //Relay pin untuk normal
+#define RELAY_PIN_3 A1  //Relay pin untuk dingin
 
 
 // Pins for LED
@@ -74,37 +74,13 @@ int distance4 = 0;
 int distance5 = 0;
 int distance6 = 0;
 int waktuPengisian = 0;
-
+int countIsi = 0;
 String mode = "";
 
 void setup() {
-  // Initialize Serial Monitor
   Serial.begin(115200);
-  waktuPengisian = isiAir * 35;
-  // Set trigger pins as output
-  while (!Serial) delay(10);  // for Leonardo/Micro/Zero
-
-  Serial.println("Hello!");
-
-  nfc.begin();
-
-  uint32_t versiondata = nfc.getFirmwareVersion();
-  if (!versiondata) {
-    Serial.print("Didn't find PN53x board");
-    while (1)
-      ;  // halt
-  }
-  // Got ok data, print it out!
-  Serial.print("Found chip PN5");
-  Serial.println((versiondata >> 24) & 0xFF, HEX);
-  Serial.print("Firmware ver. ");
-  Serial.print((versiondata >> 16) & 0xFF, DEC);
-  Serial.print('.');
-  Serial.println((versiondata >> 8) & 0xFF, DEC);
-
-  Serial.println("Waiting for an ISO14443A Card ...");
   pinMode(TRIGGER_PIN_1, OUTPUT);
-  pinMode(TRIGGER_PIN_2, OUTPUT);
+  //  pinMode(TRIGGER_PIN_2, OUTPUT);
   pinMode(TRIGGER_PIN_3, OUTPUT);
   pinMode(TRIGGER_PIN_4, OUTPUT);
   pinMode(TRIGGER_PIN_5, OUTPUT);
@@ -128,18 +104,50 @@ void setup() {
   pinMode(LED2, OUTPUT);
   pinMode(LED3, OUTPUT);
   pinMode(pinBuzzer, OUTPUT);
+  // Initialize Serial Monitor
+  Serial.begin(115200);
+  waktuPengisian = isiAir * 40;
+  // Set trigger pins as output
+  while (!Serial) delay(10);  // for Leonardo/Micro/Zero
+
+  Serial.println("Hello!");
+
+  nfc.begin();
+
+  uint32_t versiondata = nfc.getFirmwareVersion();
+  if (!versiondata) {
+    Serial.print("Didn't find PN53x board");
+    while (1)
+      ;  // halt
+  }
+  // Got ok data, print it out!
+  Serial.print("Found chip PN5");
+  Serial.println((versiondata >> 24) & 0xFF, HEX);
+  Serial.print("Firmware ver. ");
+  Serial.print((versiondata >> 16) & 0xFF, DEC);
+  Serial.print('.');
+  Serial.println((versiondata >> 8) & 0xFF, DEC);
+
+  Serial.println("Waiting for an ISO14443A Card ...");
   nfc.begin();
   nfc.SAMConfig();
-
+  isiAwal();
   delay(20);
 }
 void loop() {
+  /*  
+     Cara menggunakan main atau loop komen mode yang tidak dipakai
+  */
   
   digitalWrite(LED1, HIGH);
   digitalWrite(LED2, LOW);
   digitalWrite(LED3, LOW);
   digitalWrite(RELAY_PIN_1, LOW);
   digitalWrite(RELAY_PIN_1, LOW);
+  digitalWrite(RELAY_PIN_2, LOW);
+  digitalWrite(RELAY_PIN_2, LOW);
+
+  //===================== Algoritma Offline Mode (PN532)==========================//
   getNfcIdUser();
   Serial.println(nfcID);
   delay(100);
@@ -149,6 +157,13 @@ void loop() {
     digitalWrite(LED3, LOW);
     Serial.println("oke");
     algoritmaPN532();
+    if (countIsi == 3)
+    {
+      isiLanjut();
+      delay(100);
+      countIsi = 0;
+    }
+
   }
   else
   {
@@ -166,9 +181,48 @@ void loop() {
       delay(200);
     }
   }
+  //============================ Algoritma Online Mode =====================================//
+//  algortimaOnline();
+//  if (countIsi == 3)
+//  {
+//    isiLanjut();
+//    delay(100);
+//    countIsi = 0;
+//  }
+}
+void isiAwal()
+{
+  for (int x = 0; x <= 5; x++)
+  {
+    digitalWrite(RELAY_PIN_2, HIGH);
+    digitalWrite(LED1, HIGH);
+    digitalWrite(LED2, HIGH);
+    digitalWrite(LED3, HIGH);
+    delay(waktuPengisian);
+  }
+  digitalWrite(RELAY_PIN_2, LOW);
+  digitalWrite(RELAY_PIN_2, LOW);
+  delay(100);
+
+}
+void isiLanjut()
+{
+  for (int x = 0; x <= 3; x++)
+  {
+    digitalWrite(RELAY_PIN_2, HIGH);
+    digitalWrite(LED1, HIGH);
+    digitalWrite(LED2, HIGH);
+    digitalWrite(LED3, HIGH);
+    delay(waktuPengisian);
+  }
+  digitalWrite(RELAY_PIN_2, LOW);
+  digitalWrite(RELAY_PIN_2, LOW);
+  delay(100);
+
 }
 void algoritmaPN532() {
   digitalWrite(RELAY_PIN_1, HIGH);
+  //  digitalWrite(RELAY_PIN_2, HIGH);
   delay(waktuPengisian);
   digitalWrite(RELAY_PIN_1, LOW);
   digitalWrite(RELAY_PIN_1, LOW);
@@ -179,6 +233,29 @@ void algoritmaPN532() {
   delay(100);
   digitalWrite(RELAY_PIN_1, LOW);
   digitalWrite(RELAY_PIN_1, LOW);
+  countIsi++;
+}
+void algoritmaOnline()
+{
+  if (Serial.available() > 0) {  //open communication
+    String dataIn = Serial.readString();
+    if (dataIn == "o" || dataIn == "O" || dataIn == "o\n" || dataIn == "O\n") {  //waiting for treshold
+      digitalWrite(RELAY_PIN_1, HIGH);
+      //  digitalWrite(RELAY_PIN_2, HIGH);
+      delay(waktuPengisian);
+      digitalWrite(RELAY_PIN_1, LOW);
+      digitalWrite(RELAY_PIN_1, LOW);
+      delay(100);
+      digitalWrite(RELAY_PIN_1, LOW);
+      digitalWrite(RELAY_PIN_1, LOW);
+      Serial.println("SELESAI");
+      delay(100);
+      digitalWrite(RELAY_PIN_1, LOW);
+      digitalWrite(RELAY_PIN_1, LOW);
+      countIsi++;
+      // break;  //end session
+    }
+  }
 }
 void algoritmaDispenserOne() {
   if (Serial.available() > 0) {  //open communication
